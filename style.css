@@ -1,0 +1,392 @@
+ <style>
+        :root {
+            --matrix-green: #0f0;
+            --dark-terminal: #0a0a0a;
+            --glow-blue: #0af;
+            --warning-red: #f00;
+            --hacker-purple: #9400D3;
+            --simpson-orange: #FF8C00;
+        }
+        
+        body {
+            background-color: var(--dark-terminal);
+            color: var(--matrix-green);
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+        
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                rgba(0, 255, 0, 0.06) 1px,
+                transparent 1px
+            );
+            background-size: 100% 2px;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 20px;
+            position: relative;
+            border: 1px solid var(--simpson-orange);
+            box-shadow: 0 0 15px rgba(255, 140, 0, 0.3);
+            background-color: rgba(10, 10, 10, 0.85);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 1px dashed var(--simpson-orange);
+            padding-bottom: 20px;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin: 0;
+            text-shadow: 0 0 10px var(--simpson-orange);
+            letter-spacing: 2px;
+        }
+        
+        .header p {
+            margin: 5px 0 0;
+            color: var(--glow-blue);
+        }
+        
+        .access-status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: var(--matrix-green);
+            animation: blink 1s step-end infinite;
+        }
+        
+        .input-section {
+            margin-bottom: 30px;
+        }
+        
+        .input-group {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        
+        #numberInput {
+            flex: 1;
+            padding: 15px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--simpson-orange);
+            color: var(--matrix-green);
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+        }
+        
+        #numberInput::placeholder {
+            color: #0a0;
+        }
+        
+        #scanBtn {
+            padding: 15px 25px;
+            background-color: #000;
+            color: var(--simpson-orange);
+            border: 1px solid var(--simpson-orange);
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-left: 10px;
+        }
+        
+        #scanBtn:hover {
+            background-color: var(--simpson-orange);
+            color: #000;
+            text-shadow: 0 0 5px #000;
+        }
+        
+        #scanBtn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .results-container {
+            min-height: 300px;
+            border: 1px solid var(--simpson-orange);
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .scan-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom,
+                rgba(255, 140, 0, 0) 0%,
+                rgba(255, 140, 0, 0.1) 50%,
+                rgba(255, 140, 0, 0) 100%
+            );
+            animation: scan 3s linear infinite;
+            display: none;
+        }
+        
+        .result-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .result-line {
+            margin-bottom: 10px;
+            display: flex;
+        }
+        
+        .result-label {
+            width: 200px;
+            color: var(--glow-blue);
+        }
+        
+        .result-value {
+            flex: 1;
+        }
+        
+        .valid {
+            color: var(--matrix-green);
+            text-shadow: 0 0 5px var(--matrix-green);
+        }
+        
+        .invalid {
+            color: var(--warning-red);
+            text-shadow: 0 0 5px var(--warning-red);
+        }
+        
+        .typing {
+            border-right: 2px solid var(--matrix-green);
+            animation: blink-caret 0.75s step-end infinite;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #0a0;
+            border-top: 1px dashed var(--simpson-orange);
+            padding-top: 20px;
+        }
+        
+        .examples {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .example-btn {
+            padding: 10px;
+            background-color: #000;
+            border: 1px solid var(--simpson-orange);
+            color: var(--matrix-green);
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            flex: 1;
+            text-align: center;
+        }
+        
+        .example-btn:hover {
+            background-color: var(--simpson-orange);
+            color: #000;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 12px;
+            background-color: #000;
+            border: 1px solid var(--warning-red);
+            color: var(--warning-red);
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .action-btn:hover {
+            background-color: var(--warning-red);
+            color: #000;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: var(--dark-terminal);
+            border: 2px solid var(--warning-red);
+            padding: 20px;
+            width: 80%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .modal-title {
+            color: var(--warning-red);
+            margin-top: 0;
+            border-bottom: 1px dashed var(--warning-red);
+            padding-bottom: 10px;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--warning-red);
+            color: var(--matrix-green);
+            font-family: 'Courier New', monospace;
+        }
+
+        .modal-submit {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--warning-red);
+            color: #000;
+            border: none;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+
+        .payment-instructions {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px dashed var(--warning-red);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            background-color: rgba(0, 0, 0, 0.3);
+        }
+
+        .payment-step {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .payment-step-number {
+            color: var(--warning-red);
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        .payment-numbers {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-left: 3px solid var(--warning-red);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: var(--warning-red);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        @keyframes scan {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+        
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: var(--matrix-green); }
+        }
+        
+        @keyframes glitch {
+            0% { text-shadow: 2px 0 red, -2px 0 blue; }
+            25% { text-shadow: -2px 0 red, 2px 0 blue; }
+            50% { text-shadow: 2px 0 red, -2px 0 blue; }
+            75% { text-shadow: -2px 0 red, 2px 0 blue; }
+            100% { text-shadow: 2px 0 red, -2px 0 blue; }
+        }
+        
+        .binary-rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        
+        .binary-digit {
+            position: absolute;
+            color: var(--simpson-orange);
+            font-size: 16px;
+            animation: fall linear infinite;
+        }
+        
+        @keyframes fall {
+            to {
+                transform: translateY(100vh);
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                margin: 10px auto;
+                padding: 15px;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            #scanBtn {
+                margin-left: 0;
+                margin-top: 10px;
+            }
+            
+            .examples {
+                flex-direction: column;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
